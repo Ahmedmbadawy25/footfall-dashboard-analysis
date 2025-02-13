@@ -1,14 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 // import Register from './pages/Register';
-import Dashboard from "./pages/Dashboard";
 import Unauthorized from "./pages/Unauthorized";
 import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from './components/AuthContext';
+import AdminLayout from "layouts/admin";
 
 
 const App = () => (
-  <Router>
     <AuthProvider>
     <Routes>
       <Route path="/" element={<Login />} />
@@ -16,12 +15,11 @@ const App = () => (
 
       {/* Private Routes */}
       <Route element={<PrivateRoute allowedRoles={'admin'}/>}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admin/*" element={<AdminLayout />} />
       </Route>
 
     </Routes>
     </AuthProvider>
-  </Router>
 );
 
 export default App;
