@@ -6,10 +6,7 @@ export const makeRequest = async (method, url, data=null) => {
             method,
             url,
             data,
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
+            withCredentials: true
         });
         return { status: `${response.status}`, message: `${response.data.message}`, data:response.data };
     } catch (error) {

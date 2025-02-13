@@ -15,7 +15,7 @@ router.get("/vendor", verifyToken, authorizeRoles("vendor", "admin"), (req, res)
 })
 
 // Only users can access these routes
-router.get("/user", verifyToken, authorizeRoles("user"), (req, res) => {
+router.get("/", verifyToken, authorizeRoles("admin"), (req, res) => {
     res.json({message: "Welcome user"})
 })
 

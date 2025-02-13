@@ -1,38 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { makeRequest } from '../fetcher'
+import { useAuth } from '../components/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const { login, user } = useAuth();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!email || !password) {
-        setError("Please fill in all fields.");
-        return
-    }
     setError("");
-
-    try {
-        const response = await makeRequest("POST", '/api/auth/login', { email, password });
-        if (response.status === "200") {
-            navigate("/dashboard");
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('role', response.data.role);
-            localStorage.setItem('_id', response.data.id);
-            console.log('success')
-        } else {
-            setError(response.message);
-        }
-    } catch (error) {
-        console.error("Unexpected error:", error);
-        setError("An unexpected error occurred.");
+    e.preventDefault();
+    const response = await login({email, password})
+    if (response.status === '200') {
+      navigate('/dashboard')
     }
-};
+    else {
+      setError(response.message)
+    }
+  };
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

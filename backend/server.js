@@ -4,7 +4,7 @@ const connectDB = require('./config/db');
 require('dotenv').config()
 const { logger } = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
-// const cookieParser = require('cookie-parser');
+const cookieParser = require('cookie-parser');
 const corsOptions = require('./config/corsOptions');
 
 connectDB()
@@ -15,12 +15,11 @@ const app = express();
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(logger);
-// app.use(cookieParser());
+app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', require('./routes/Auth'));
 app.use('/api/users', require('./routes/User'));
-app.use('/api/projects', require('./routes/Project'));
 
 const PORT = process.env.PORT || 8000;
 

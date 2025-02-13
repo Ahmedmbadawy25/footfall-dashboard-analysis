@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { makeRequest } from "../fetcher";
+import { useAuth } from '../components/AuthContext';
 
 const Dashboard = () => {
-    const role = localStorage.getItem("role");
+    const { user } = useAuth();
+
+    const role = user.role;
     const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
     const [projects, setProjects] = useState([]);
@@ -16,11 +19,11 @@ const Dashboard = () => {
                 setLoading(true);
                 if (role === "admin" || role === "vendor") {
                     const response = await makeRequest("GET", '/api/users')
-                    setCustomers(response.data);
+                    // setCustomers(response.data);
                 } 
                 else if (role === "user") {
                     const response = await makeRequest('GET', "/api/projects");
-                    setProjects(response.data);
+                    // setProjects(response.data);
                 }
             } 
             catch (err) {
