@@ -136,7 +136,7 @@ const Navbar = (props) => {
         {/* Profile & Dropdown */}
         <Dropdown
           button={
-            <MdAccountCircle className="h-10 w-10 rounded-full cursor-pointer"/>
+            <MdAccountCircle className="h-10 w-10 rounded-full cursor-pointer text-gray-400 dark:text-white"/>
           }
           children={
             <div className="flex w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">

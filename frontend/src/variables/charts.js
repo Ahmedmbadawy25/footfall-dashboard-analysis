@@ -273,10 +273,6 @@ export const lineChartOptionsTotalSpent = {
   legend: {
     show: false,
   },
-
-  theme: {
-    mode: "light",
-  },
   chart: {
     type: "line",
 
