@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault();
     const response = await login({email, password})
     if (response.status === '200') {
-      navigate('/dashboard')
+      navigate('/admin/dashboard')
     }
     else {
       setError(response.message)
