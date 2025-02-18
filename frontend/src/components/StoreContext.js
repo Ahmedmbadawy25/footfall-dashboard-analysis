@@ -21,7 +21,7 @@ export const StoreProvider = ({ children }) => {
   }, [storeId]);
 
   return (
-    <StoreContext.Provider value={{ storeId, setStoreId, stores, fetchStores }}>
+    <StoreContext.Provider value={{ storeId, setStoreId, stores, fetchStores, setStores }}>
       {children}
     </StoreContext.Provider>
   );

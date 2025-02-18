@@ -1,18 +1,18 @@
-const StoreCard = ({ store, onDelete }) => {
-    return (
-      <div className="p-4 bg-white rounded-lg shadow-md dark:bg-gray-800">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{store.name}</h3>
-        <p className="text-gray-500 dark:text-gray-400">Owner: {store.owner}</p>
-        <p className="text-gray-500 dark:text-gray-400">Location: {store.location}</p>
-        <button
-          onClick={() => onDelete(store.id)}
-          className="mt-3 px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-600"
-        >
-          Delete
-        </button>
-      </div>
-    );
-  };
-  
-  export default StoreCard;
-  
+import React from "react";
+
+const StoreCard = ({ id, name, location, onDelete }) => {
+  return (
+    <div className="rounded-xl bg-white p-4 shadow-lg dark:bg-navy-700">
+      <h3 className="text-xl font-bold text-navy-700 dark:text-white">{name}</h3>
+      <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{location}</p>
+      <button
+        onClick={() => onDelete(id)}
+        className="mt-4 rounded-lg bg-red-500 px-3 py-1 text-sm font-medium text-white hover:bg-red-600"
+      >
+        Delete Store
+      </button>
+    </div>
+  );
+};
+
+export default StoreCard;

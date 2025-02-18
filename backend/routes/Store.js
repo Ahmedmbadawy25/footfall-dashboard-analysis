@@ -6,5 +6,6 @@ const authorizeRoles = require("../middleware/roleMiddleware")
 
 router.get('/', verifyToken, storeController.getStores);
 router.post('/', verifyToken, storeController.addNewStore);
+router.get('/:storeId', verifyToken, storeController.deleteStore);
 
 module.exports = router;

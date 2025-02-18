@@ -31,10 +31,29 @@ const addNewStore = asyncHandler(async (req, res) => {
     return res.status(500).json({ message: 'Store creation failed' });
   }
 
-  res.status(201).json({ message: 'Store created successfully' });
+  res.status(201).json({ message: 'Store created successfully', store: newStore });
+});
+
+// @desc    Delete store by id
+// @route   DELETE /api/stores/:storeId
+// @access  Private
+const deleteStore = asyncHandler(async (req, res) => {  
+  const { storeId } = req.params
+
+  if (!storeId) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+  const store = await Store.findByIdAndDelete(storeId)
+
+  if (!store) {
+    return res.status(500).json({ message: 'Store deletion failed' });
+  }
+
+  res.status(200).json({ message: 'Store deleted successfully' });
 });
 
 module.exports = {
     getStores,
-    addNewStore
+    addNewStore,
+    deleteStore
 };

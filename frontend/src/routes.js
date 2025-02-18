@@ -5,6 +5,7 @@ import MainDashboard from "views/admin/default";
 import NFTMarketplace from "views/admin/marketplace";
 import Profile from "views/admin/profile";
 import DataTables from "views/admin/tables";
+import StoreManager from "views/admin/stores";
 
 // Auth Imports
 
@@ -30,7 +31,7 @@ const routes = [
     layout: "/admin",
     path: "stores",
     icon: <MdOutlineShoppingCart className="h-6 w-6" />,
-    component: <NFTMarketplace />,
+    component: <StoreManager />,
     secondary: true,
   },
   {

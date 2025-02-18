@@ -77,7 +77,7 @@ const Navbar = (props) => {
               {stores && stores.map((store) => (
                 <button
                   key={store._id}
-                  className="flex w-full items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  className="flex w-full items-center p-2 hover:bg-gray-100 rounded-lg dark:hover:bg-white/20 dark:active:bg-white/10"
                   onClick={() => setStoreId(store._id)}
                 >
                   <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
