@@ -20,6 +20,9 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', require('./routes/Auth'));
 app.use('/api/users', require('./routes/User'));
+// app.use("/api/footfall", require('./routes/Footfall'));
+app.use("/api/stores", require('./routes/Store'));
+
 
 const PORT = process.env.PORT || 8000;
 
