@@ -5,14 +5,15 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [name, setName] = useState(null)
     const [loading, setLoading] = useState(true);
 
-    // Fetch the authenticated user from the backend
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await makeRequest('GET', '/api/auth/me');  // Endpoint to get user info from the backend
-                setUser(res.data.user);  // Example: { id, role, name }
+                const res = await makeRequest('GET', '/api/auth/me');
+                setUser(res.data.user);
+                setName(res.data.name)
             } catch (error) {
                 setUser(null);
             }
@@ -36,19 +37,17 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // 🔹 Centralized logout function
     const logout = async () => {
         try {
             await makeRequest('POST', '/api/auth/logout');
-            setUser(null); // ✅ Clear user in AuthContext
+            setUser(null);
         } catch (error) {
             console.error('Logout failed:', error.message);
         }
     };
 
-
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, name }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,3 +1,4 @@
+import React from "react";
 import MiniCalendar from "components/calendar/MiniCalendar";
 import WeeklyRevenue from "views/admin/default/components/WeeklyRevenue";
 import TotalSpent from "views/admin/default/components/TotalSpent";
@@ -6,6 +7,7 @@ import { IoMdHome, IoMdPeople } from "react-icons/io";
 import { IoDocuments } from "react-icons/io5";
 import { MdBarChart, MdDashboard, MdAccessTime, MdTrendingUp, MdTrendingDown } from "react-icons/md";
 import { FaChartLine } from "react-icons/fa";
+import { useStore } from "components/StoreContext";
 
 import { columnsDataCheck, columnsDataComplex } from "./variables/columnsData";
 
@@ -18,6 +20,14 @@ import tableDataCheck from "./variables/tableDataCheck.json";
 import tableDataComplex from "./variables/tableDataComplex.json";
 
 const Dashboard = () => {
+  const { storeId } = useStore();
+
+  React.useEffect(() => {
+    if (storeId) {
+      console.log(storeId)
+    }
+  }, [storeId]);
+
   return (
     <div>
       {/* Card widget */}
@@ -36,6 +46,8 @@ const Dashboard = () => {
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <TotalSpent />
         <WeeklyRevenue />
+        {/* <HourlyVisitsSummary />
+        <DailyVisitsSummary /> */}
       </div>
 
       {/* Tables & Charts */}
@@ -47,6 +59,7 @@ const Dashboard = () => {
             columnsData={columnsDataCheck}
             tableData={tableDataCheck}
           />
+          {/* <ComparisonChart /> */}
         </div>
 
         {/* Traffic chart & Pie Chart */}
@@ -54,6 +67,8 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
           <DailyTraffic />
           <PieChartCard />
+          {/* <Summaries />
+          < PeakHoursTrend /> */}
         </div>
 
         {/* Complex Table , Task & Calendar */}
