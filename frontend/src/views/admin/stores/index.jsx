@@ -1,33 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Banner from "./components/Banner";
-import HistoryCard from "./components/HistoryCard";
-import TopCreatorTable from "./components/TableTopCreators";
 import StoreCard from "./components/StoreCard";
 import CreateStoreModal from "./components/CreateStoreModal";
 import { useStore } from "components/StoreContext";
 import Widget from "components/widget/Widget";
 import { makeRequest } from "fetcher";
+import { MdTrendingUp, MdTrendingDown } from "react-icons/md";
+import { FaChartLine } from "react-icons/fa";
+import { useQuery } from "@tanstack/react-query";
+
+const fetchWidgetData = async () => {
+  const response = await makeRequest("GET", "/api/footfall/stores-page-widgets-data");
+  if (response.status === '200') {
+    const data = response.data
+    return data
+  }
+  throw new Error("Failed to fetch widget data");
+};
 
 const StoreManager = () => {
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
-  const [widgetData, setWidgetData] = useState(null)
+  const { data: widgetData, isLoading, error } = useQuery({
+    queryKey: ["storesWidgetData"],
+    queryFn: fetchWidgetData,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    cacheTime: 5 * 60 * 1000,
+  });
   const { stores, setStores } = useStore()
-
-  useEffect(() => {
-    const fetchWidgetData = async () => {
-        try {
-          const response = await makeRequest('GET', '/api/footfall/stores-page-widgets-data');
-          if (response.status === '200') {
-            setWidgetData(response.data)
-          }
-        }
-        catch (error) {
-          console.error(error)
-        }
-        // setLoading(false);
-    };
-    fetchWidgetData();
-  }, []);
 
   const handleCreateStore = async (storeData) => {
     try {
@@ -52,17 +51,17 @@ const StoreManager = () => {
   };
 
   return (
-    <div className="mt-3 grid h-full grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
+    <div className="mt-3 h-full grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
       <div className="col-span-1 h-fit w-full xl:col-span-1 2xl:col-span-2">
         <Banner />
 
         <div className="mb-4 mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
-          <Widget icon="🏬" title={"Total Stores"} subtitle={stores.length} />
-          <Widget icon="👣" title={"Total Footfall Today"} subtitle={widgetData?.totalFootfallToday} />
-          <Widget icon="📊" title={"Average Footfall Today"} subtitle={widgetData?.averageFootfallPerStore} />
-          <Widget icon="🔥" title="Most Visited Store" subtitle={widgetData?.mostVisitedStore || "N/A"} />
-          <Widget icon="❄️" title="Least Visited Store" subtitle={widgetData?.leastVisitedStore || "N/A"} />
-          <Widget icon="📈" title="Store with Most Growth" subtitle={widgetData?.mostGrowthStore || "N/A"} />
+          <Widget icon="🏬" title={"Total Stores"} subtitle={stores?.length || "N/A"} />
+          <Widget icon="👣" title={"Total Footfall Today"} subtitle={widgetData?.totalFootfallToday || "N/A"} />
+          <Widget icon="📊" title={"Average Footfall Today"} subtitle={widgetData?.averageFootfallPerStore || "N/A"} />
+          <Widget icon={<MdTrendingUp className="h-7 w-7" />} title="Most Visited Store" subtitle={widgetData?.mostVisitedStore || "N/A"} />
+          <Widget icon={<MdTrendingDown className="h-7 w-7" />} title="Least Visited Store" subtitle={widgetData?.leastVisitedStore || "N/A"} />
+          <Widget icon={<FaChartLine className="h-7 w-7" />} title="Store with Most Growth" subtitle={widgetData?.mostGrowthStore || "N/A"} />
         </div>
 
         {/* Store Manager Header */}
@@ -89,31 +88,6 @@ const StoreManager = () => {
               onDelete={handleDeleteStore}
             />
           ))}
-        </div>
-      </div>
-
-      {/* Right Side Section */}
-      <div className="col-span-1 h-full w-full rounded-xl 2xl:col-span-1">
-        {/* <FootfallTrendChart /> */}
-
-        {/* Recent Activity (Optional) */}
-        <div className="mt-5">
-          <h4 className="text-xl font-bold text-navy-700 dark:text-white">
-            Recent Activity
-          </h4>
-          <div className="mt-3 space-y-3">
-            {/* Example activity items */}
-            <div className="rounded-lg bg-white p-4 shadow-lg dark:bg-navy-700">
-              <p className="text-sm text-gray-600 dark:text-white">
-                Store "Main Street" had a peak footfall of 120 at 3 PM.
-              </p>
-            </div>
-            <div className="rounded-lg bg-white p-4 shadow-lg dark:bg-navy-700">
-              <p className="text-sm text-gray-600 dark:text-white">
-                Store "Downtown Mall" added to the system.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

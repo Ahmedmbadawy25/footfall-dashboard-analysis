@@ -6,9 +6,12 @@ import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from './components/AuthContext';
 import { StoreProvider } from "./components/StoreContext";
 import AdminLayout from "layouts/admin";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+const queryClient = new QueryClient();
 
 const App = () => (
+  <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <StoreProvider>
         <Routes>
@@ -23,6 +26,7 @@ const App = () => (
         </Routes>
       </StoreProvider>
     </AuthProvider>
+    </QueryClientProvider>
 );
 
 export default App;
