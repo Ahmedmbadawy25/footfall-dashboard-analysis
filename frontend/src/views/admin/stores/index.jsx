@@ -10,7 +10,24 @@ import { makeRequest } from "fetcher";
 
 const StoreManager = () => {
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
+  const [widgetData, setWidgetData] = useState(null)
   const { stores, setStores } = useStore()
+
+  useEffect(() => {
+    const fetchWidgetData = async () => {
+        try {
+          const response = await makeRequest('GET', '/api/footfall/stores-page-widgets-data');
+          if (response.status === '200') {
+            setWidgetData(response.data)
+          }
+        }
+        catch (error) {
+          console.error(error)
+        }
+        // setLoading(false);
+    };
+    fetchWidgetData();
+  }, []);
 
   const handleCreateStore = async (storeData) => {
     try {
@@ -41,8 +58,11 @@ const StoreManager = () => {
 
         <div className="mb-4 mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
           <Widget icon="🏬" title={"Total Stores"} subtitle={stores.length} />
-          <Widget icon="👣" title={"Total Footfall Today"} subtitle={'1,234'} />
-          <Widget icon="📊" title={"Average Footfall Today"} subtitle={'1,234'} />
+          <Widget icon="👣" title={"Total Footfall Today"} subtitle={widgetData?.totalFootfallToday} />
+          <Widget icon="📊" title={"Average Footfall Today"} subtitle={widgetData?.averageFootfallPerStore} />
+          <Widget icon="🔥" title="Most Visited Store" subtitle={widgetData?.mostVisitedStore || "N/A"} />
+          <Widget icon="❄️" title="Least Visited Store" subtitle={widgetData?.leastVisitedStore || "N/A"} />
+          <Widget icon="📈" title="Store with Most Growth" subtitle={widgetData?.mostGrowthStore || "N/A"} />
         </div>
 
         {/* Store Manager Header */}
