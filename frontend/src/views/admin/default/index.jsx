@@ -1,6 +1,8 @@
 import React from "react";
 import MiniCalendar from "components/calendar/MiniCalendar";
 import WeeklyRevenue from "views/admin/default/components/WeeklyRevenue";
+import HourlyVisits from "views/admin/default/components/HourlyVisits";
+import DailyVisits from "views/admin/default/components/DailyVisits";
 import TotalSpent from "views/admin/default/components/TotalSpent";
 import PieChartCard from "views/admin/default/components/PieChartCard";
 import { IoMdHome, IoMdPeople } from "react-icons/io";
@@ -40,7 +42,6 @@ const Dashboard = () => {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     // refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
-  console.log(widgetData)
 
   return (
     <div>
@@ -58,10 +59,10 @@ const Dashboard = () => {
       {/* Charts */}
 
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+        {/* <DailyVisits key={storeId} data={widgetData?.dailyFootfall}/> */}
+        <HourlyVisits key={storeId} data={widgetData?.hourlyFootfall} />
         <TotalSpent />
-        <WeeklyRevenue />
-        {/* <HourlyVisitsSummary />
-        <DailyVisitsSummary /> */}
+        {/* <WeeklyRevenue /> */}
       </div>
 
       {/* Tables & Charts */}

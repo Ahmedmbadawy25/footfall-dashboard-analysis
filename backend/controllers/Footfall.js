@@ -149,16 +149,12 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
         const totalFootfallToday = todayFootfall.length;
         const totalFootfallThisWeek = pastWeekFootfall.length;
 
-        if (totalFootfallThisWeek === 0) {
-            return res.status(200).json({
-                totalFootfallToday,
-                busiestHourToday: "N/A",
-                quietestHourToday: "N/A",
-                busiestDayThisWeek: "N/A",
-                quietestDayThisWeek: "N/A",
-                totalFootfallThisWeek
-            });
-        }
+        // Process footfall per hour
+        const hourlyFootfall = new Array(24).fill(0);
+        todayFootfall.forEach(entry => {
+            const hour = moment(entry.timestamp).tz(cairoTZ).hour();  // Convert to Cairo hour
+            hourlyFootfall[hour]++;
+        });
 
         // Compute footfall per day
         const dailyFootfall = new Array(7).fill(0);
@@ -166,6 +162,20 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
             const day = moment(entry.timestamp).tz(cairoTZ).day(); // Convert to Cairo day
             dailyFootfall[day]++;
         });
+
+        if (totalFootfallThisWeek === 0) {
+            return res.status(200).json({
+                totalFootfallToday,
+                busiestHourToday: "N/A",
+                quietestHourToday: "N/A",
+                busiestDayThisWeek: "N/A",
+                quietestDayThisWeek: "N/A",
+                totalFootfallThisWeek,
+                hourlyFootfall,
+                dailyFootfall
+            });
+        }
+
         // Find busiest/quietest days
         let busiestDayThisWeek = 0, quietestDayThisWeek = 0;
         let maxDayCount = 0, minDayCount = Infinity;
@@ -193,19 +203,14 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
                 quietestHourToday: "N/A",
                 busiestDayThisWeek,
                 quietestDayThisWeek,
-                totalFootfallThisWeek
+                totalFootfallThisWeek,
+                hourlyFootfall,
+                dailyFootfall
             });
         }
 
-        // Process footfall per hour
-        const hourlyFootfall = new Array(24).fill(0);
-        todayFootfall.forEach(entry => {
-            const hour = moment(entry.timestamp).tz(cairoTZ).hour();  // Convert to Cairo hour
-            hourlyFootfall[hour]++;
-        });
-
         // Find busiest/quietest hours
-        let busiestHourToday = null, quietestHourToday = 0;
+        let busiestHourToday = null, quietestHourToday = null;
         let maxHourCount = 0, minHourCount = Infinity;
         
         hourlyFootfall.forEach((count, hour) => {
@@ -215,7 +220,7 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
             }
             if (count < minHourCount && count > 0) {  // Only consider hours that had visits
                 minHourCount = count;
-                quietestHour = hour;
+                quietestHourToday = hour;
             }
         });
 
@@ -236,7 +241,9 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
             quietestHourToday: formatHourRange(quietestHourToday),
             busiestDayThisWeek, 
             quietestDayThisWeek,
-            totalFootfallThisWeek
+            totalFootfallThisWeek,
+            hourlyFootfall,
+            dailyFootfall
         };
 
         cache.set(cacheKey, result);
@@ -250,5 +257,5 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
 module.exports = {
     postData,
     getStoresPageWidgetsData,
-    getDashboardWidgetsData
+    getDashboardWidgetsData,
 };
