@@ -2,7 +2,8 @@ const asyncHandler = require('express-async-handler');
 const Footfall = require('../models/Footfall');
 const Store = require("../models/Store");
 const NodeCache = require("node-cache");
-const cache = new NodeCache({ stdTTL: 300 }); // Cache for 5 mins
+const cache = new NodeCache({ stdTTL: 30 }); // Cache for 5 mins
+const moment = require('moment-timezone')
 
 const postData = asyncHandler(async (req, res) => {
     const data = req.body
@@ -18,21 +19,24 @@ const getStoresPageWidgetsData = asyncHandler(async (req, res) => {
         if (cachedData) {
             return res.status(200).json(cachedData);
         }
-        const egyptTime = new Date();
-        egyptTime.setHours(0, 0, 0, 0); // Start of today
 
-        const yesterdayTime = new Date(egyptTime);
-        yesterdayTime.setDate(yesterdayTime.getDate() - 1); // Start of yesterday
+        // Get the current date in Egypt timezone and reset time to start of the day
+        const egyptTime = moment.tz("Africa/Cairo").startOf("day").toDate();
+        const yesterdayTime = moment.tz("Africa/Cairo").subtract(1, "day").startOf("day").toDate();
 
         // Query footfall entries for today
-        const todayFootfall = await Footfall.find({ timestamp: { $gte: egyptTime } });
+        const todayFootfall = await Footfall.find({
+            timestamp: { $gte: egyptTime }
+        });
 
         // Query footfall entries for yesterday
-        const yesterdayFootfall = await Footfall.find({ timestamp: { $gte: yesterdayTime, $lt: egyptTime } });
+        const yesterdayFootfall = await Footfall.find({
+            timestamp: { $gte: yesterdayTime, $lt: egyptTime }
+        });
 
         // Get all store IDs and names from the store collection
         const allStores = await Store.find({}, "_id name");
-        const storeMap = {}; // Map store_id to store name
+        const storeMap = {};
         allStores.forEach(store => {
             storeMap[store._id.toString()] = store.name;
         });
@@ -40,14 +44,17 @@ const getStoresPageWidgetsData = asyncHandler(async (req, res) => {
         // Group today's footfall by store_id
         const storeFootfallCounts = {};
         todayFootfall.forEach(entry => {
-            storeFootfallCounts[entry.store_id] = (storeFootfallCounts[entry.store_id] || 0) + 1;
+            const storeId = entry.store_id.toString();
+            storeFootfallCounts[storeId] = (storeFootfallCounts[storeId] || 0) + 1;
         });
 
         // Calculate total footfall today
         const totalFootfallToday = todayFootfall.length;
-        
+
         // Compute average footfall per store
-        const averageFootfallPerStore = Math.round(totalFootfallToday / allStores.length);
+        const averageFootfallPerStore = allStores.length > 0
+            ? Math.round(totalFootfallToday / allStores.length)
+            : 0;
 
         // Find the store with the most visits
         let mostVisitedStoreId = null;
@@ -64,7 +71,7 @@ const getStoresPageWidgetsData = asyncHandler(async (req, res) => {
         let leastVisitedStoreId = null;
         let leastVisits = Infinity;
         allStores.forEach(store => {
-            const visits = storeFootfallCounts[store._id.toString()] || 0; // Default to 0 if no visits
+            const visits = storeFootfallCounts[store._id.toString()] || 0;
             if (visits < leastVisits) {
                 leastVisits = visits;
                 leastVisitedStoreId = store._id.toString();
@@ -75,10 +82,12 @@ const getStoresPageWidgetsData = asyncHandler(async (req, res) => {
         // Calculate store footfall growth percentage compared to yesterday
         const storeGrowth = {};
         todayFootfall.forEach(entry => {
-            storeGrowth[entry.store_id] = (storeGrowth[entry.store_id] || 0) + 1;
+            const storeId = entry.store_id.toString();
+            storeGrowth[storeId] = (storeGrowth[storeId] || 0) + 1;
         });
         yesterdayFootfall.forEach(entry => {
-            storeGrowth[entry.store_id] = (storeGrowth[entry.store_id] || 0) - 1;
+            const storeId = entry.store_id.toString();
+            storeGrowth[storeId] = (storeGrowth[storeId] || 0) - 1;
         });
 
         let mostGrowthStoreId = null;
@@ -98,9 +107,139 @@ const getStoresPageWidgetsData = asyncHandler(async (req, res) => {
             mostVisitedStore, 
             leastVisitedStore, 
             mostGrowthStore 
-          };
-      
+        };
+
+        // Cache the result
         cache.set("storesWidgetData", result);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error fetching footfall data:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+
+const getDashboardWidgetsData = asyncHandler(async (req, res) => {
+    try {
+        const { storeId } = req.params;
+        const cacheKey = `dashboardWidgetData_${storeId}`;
+        const cachedData = cache.get(cacheKey);
+
+        if (cachedData) {
+            return res.status(200).json(cachedData);
+        }
+
+        // Ensure start times are correctly adjusted to Cairo time
+        const cairoTZ = "Africa/Cairo";
+        const startOfToday = moment.tz(cairoTZ).startOf("day").toDate(); 
+        const startOfWeek = moment.tz(cairoTZ).startOf("week").toDate();
+
+        // Fetch footfall data using correct Cairo time range
+        const todayFootfall = await Footfall.find({ 
+            store_id: storeId, 
+            timestamp: { $gte: startOfToday } 
+        });
+
+        const pastWeekFootfall = await Footfall.find({ 
+            store_id: storeId, 
+            timestamp: { $gte: startOfWeek } 
+        });
+
+        // Compute footfall stats
+        const totalFootfallToday = todayFootfall.length;
+        const totalFootfallThisWeek = pastWeekFootfall.length;
+
+        if (totalFootfallThisWeek === 0) {
+            return res.status(200).json({
+                totalFootfallToday,
+                busiestHourToday: "N/A",
+                quietestHourToday: "N/A",
+                busiestDayThisWeek: "N/A",
+                quietestDayThisWeek: "N/A",
+                totalFootfallThisWeek
+            });
+        }
+
+        // Compute footfall per day
+        const dailyFootfall = new Array(7).fill(0);
+        pastWeekFootfall.forEach(entry => {
+            const day = moment(entry.timestamp).tz(cairoTZ).day(); // Convert to Cairo day
+            dailyFootfall[day]++;
+        });
+        // Find busiest/quietest days
+        let busiestDayThisWeek = 0, quietestDayThisWeek = 0;
+        let maxDayCount = 0, minDayCount = Infinity;
+
+        dailyFootfall.forEach((count, day) => {
+            if (count > maxDayCount) {
+                maxDayCount = count;
+                busiestDayThisWeek = day;
+            }
+            if (count < minDayCount) {
+                minDayCount = count;
+                quietestDayThisWeek = day;
+            }
+        });
+
+        // Map day numbers to string names
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        busiestDayThisWeek = dayNames[busiestDayThisWeek];
+        quietestDayThisWeek = dayNames[quietestDayThisWeek];
+
+        if (totalFootfallToday === 0) {
+            return res.status(200).json({
+                totalFootfallToday,
+                busiestHourToday: "N/A",
+                quietestHourToday: "N/A",
+                busiestDayThisWeek,
+                quietestDayThisWeek,
+                totalFootfallThisWeek
+            });
+        }
+
+        // Process footfall per hour
+        const hourlyFootfall = new Array(24).fill(0);
+        todayFootfall.forEach(entry => {
+            const hour = moment(entry.timestamp).tz(cairoTZ).hour();  // Convert to Cairo hour
+            hourlyFootfall[hour]++;
+        });
+
+        // Find busiest/quietest hours
+        let busiestHourToday = null, quietestHourToday = 0;
+        let maxHourCount = 0, minHourCount = Infinity;
+        
+        hourlyFootfall.forEach((count, hour) => {
+            if (count > maxHourCount) {
+                maxHourCount = count;
+                busiestHourToday = hour;
+            }
+            if (count < minHourCount && count > 0) {  // Only consider hours that had visits
+                minHourCount = count;
+                quietestHour = hour;
+            }
+        });
+
+        // Format hours as ranges
+        const formatHourRange = (hour) => {
+            if (hour === null || hour === undefined) return "N/A";
+            if (hour < 0 || hour >= 24) return "Out of range";
+        
+            const nextHour = (hour + 1) % 24; // Wrap around to 00 if hour is 23
+        
+            return `${hour.toString().padStart(2, '0')}:00-${nextHour.toString().padStart(2, '0')}:00`;
+        };
+
+        // Send final response
+        const result = { 
+            totalFootfallToday, 
+            busiestHourToday: formatHourRange(busiestHourToday), 
+            quietestHourToday: formatHourRange(quietestHourToday),
+            busiestDayThisWeek, 
+            quietestDayThisWeek,
+            totalFootfallThisWeek
+        };
+
+        cache.set(cacheKey, result);
         res.status(200).json(result);
     } catch (error) {
         console.error("Error fetching footfall data:", error);
@@ -111,4 +250,5 @@ const getStoresPageWidgetsData = asyncHandler(async (req, res) => {
 module.exports = {
     postData,
     getStoresPageWidgetsData,
+    getDashboardWidgetsData
 };

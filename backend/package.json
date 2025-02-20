@@ -20,6 +20,7 @@
     "express": "^4.21.1",
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
+    "moment-timezone": "^0.5.47",
     "mongoose": "^8.8.1",
     "node-cache": "^5.1.2",
     "uuid": "^11.0.3"

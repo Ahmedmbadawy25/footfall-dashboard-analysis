@@ -8,6 +8,8 @@ import { IoDocuments } from "react-icons/io5";
 import { MdBarChart, MdDashboard, MdAccessTime, MdTrendingUp, MdTrendingDown } from "react-icons/md";
 import { FaChartLine } from "react-icons/fa";
 import { useStore } from "components/StoreContext";
+import { useQuery } from "@tanstack/react-query";
+import { makeRequest } from "fetcher";
 
 import { columnsDataCheck, columnsDataComplex } from "./variables/columnsData";
 
@@ -19,26 +21,38 @@ import TaskCard from "views/admin/default/components/TaskCard";
 import tableDataCheck from "./variables/tableDataCheck.json";
 import tableDataComplex from "./variables/tableDataComplex.json";
 
+const fetchWidgetData = async (storeId) => {
+  const response = await makeRequest("GET", `/api/footfall/dashboard-widgets-data/${storeId}`);
+  if (response.status === '200') {
+    const data = response.data
+    return data
+  }
+  throw new Error("Failed to fetch widget data");
+};
+
 const Dashboard = () => {
   const { storeId } = useStore();
 
-  React.useEffect(() => {
-    if (storeId) {
-      console.log(storeId)
-    }
-  }, [storeId]);
+  const { data: widgetData, isLoading, error } = useQuery({
+    queryKey: ["dashboardWidgetData", storeId],
+    queryFn: () => fetchWidgetData(storeId),
+    enabled: !!storeId, // Only fetch when storeId is available
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    // refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
+  });
+  console.log(widgetData)
 
   return (
     <div>
       {/* Card widget */}
 
       <div className="mt-3 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-6">
-        <Widget icon={<IoMdPeople className="h-7 w-7" />} title={"Total Entries Today"} subtitle={"1,234"} />
-        <Widget icon={<MdAccessTime className="h-7 w-7" />} title={"Busiest Hour Today"} subtitle={"14:00 - 15:00"} />
-        <Widget icon={<MdAccessTime className="h-7 w-7" />} title={"Least Busy Hour Today"} subtitle={"09:00 - 10:00"} />
-        <Widget icon={<MdTrendingUp className="h-7 w-7" />} title={"Busiest Day This Week"} subtitle={"Saturday"} />
-        <Widget icon={<MdTrendingDown className="h-7 w-7" />} title={"Least Busy Day This Week"} subtitle={"Tuesday"} />
-        <Widget icon={<FaChartLine className="h-7 w-7" />} title={"Total Entries This Week"} subtitle={"7,892"} />
+        <Widget icon={<IoMdPeople className="h-7 w-7" />} title={"Total Entries Today"} subtitle={widgetData?.totalFootfallToday} />
+        <Widget icon={<MdAccessTime className="h-7 w-7" />} title={"Busiest Hour Today"} subtitle={widgetData?.busiestHourToday} />
+        <Widget icon={<MdAccessTime className="h-7 w-7" />} title={"Least Busy Hour Today"} subtitle={widgetData?.quietestHourToday} />
+        <Widget icon={<MdTrendingUp className="h-7 w-7" />} title={"Busiest Day This Week"} subtitle={widgetData?.busiestDayThisWeek} />
+        <Widget icon={<MdTrendingDown className="h-7 w-7" />} title={"Least Busy Day This Week"} subtitle={widgetData?.quietestDayThisWeek} />
+        <Widget icon={<FaChartLine className="h-7 w-7" />} title={"Total Entries This Week"} subtitle={widgetData?.totalFootfallThisWeek} />
       </div>
 
       {/* Charts */}
