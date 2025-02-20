@@ -59,9 +59,11 @@ const Dashboard = () => {
       {/* Charts */}
 
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        {/* <DailyVisits key={storeId} data={widgetData?.dailyFootfall}/> */}
+        <>
+        <DailyVisits key={storeId} data={widgetData?.dailyFootfall}/>
+        </>
         <HourlyVisits key={storeId} data={widgetData?.hourlyFootfall} />
-        <TotalSpent />
+        {/* <TotalSpent /> */}
         {/* <WeeklyRevenue /> */}
       </div>
 

@@ -4,7 +4,7 @@ import { MdBarChart } from "react-icons/md";
 
 const DailyVisits = ({data}) => {
     if (!data || data.length !== 7) {
-        console.error("Invalid or missing data for HourlyVisits component.");
+        console.error("Invalid or missing data for DailyVisits component.");
         return null;
     }
     const filteredData = data
@@ -78,7 +78,7 @@ const chartOptions = {
     plotOptions: {
         bar: {
             borderRadius: 8,
-            columnWidth: "20px",
+            columnWidth: "24px",
         },
     },
     grid: {
