@@ -23,8 +23,8 @@ const StoreManager = () => {
   const { data: widgetData, isLoading, error } = useQuery({
     queryKey: ["storesWidgetData"],
     queryFn: fetchWidgetData,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    cacheTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000, // Cache for 30 minutes
+    cacheTime: 30 * 60 * 1000,
   });
   const { stores, setStores } = useStore()
 

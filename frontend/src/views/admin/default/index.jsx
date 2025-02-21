@@ -1,27 +1,22 @@
 import React from "react";
 import MiniCalendar from "components/calendar/MiniCalendar";
-import WeeklyRevenue from "views/admin/default/components/WeeklyRevenue";
 import HourlyVisits from "views/admin/default/components/HourlyVisits";
 import DailyVisits from "views/admin/default/components/DailyVisits";
 import DailyComparison from "views/admin/default/components/DailyComparison";
-import TotalSpent from "views/admin/default/components/TotalSpent";
 import PieChartCard from "views/admin/default/components/PieChartCard";
-import { IoMdHome, IoMdPeople } from "react-icons/io";
-import { IoDocuments } from "react-icons/io5";
-import { MdBarChart, MdDashboard, MdAccessTime, MdTrendingUp, MdTrendingDown } from "react-icons/md";
+import { IoMdPeople } from "react-icons/io";
+import { MdAccessTime, MdTrendingUp, MdTrendingDown } from "react-icons/md";
 import { FaChartLine } from "react-icons/fa";
 import { useStore } from "components/StoreContext";
 import { useQuery } from "@tanstack/react-query";
 import { makeRequest } from "fetcher";
 
-import { columnsDataCheck, columnsDataComplex } from "./variables/columnsData";
+import { columnsDataComplex } from "./variables/columnsData";
 
 import Widget from "components/widget/Widget";
-import CheckTable from "views/admin/default/components/CheckTable";
 import ComplexTable from "views/admin/default/components/ComplexTable";
 import DailyTraffic from "views/admin/default/components/DailyTraffic";
 import TaskCard from "views/admin/default/components/TaskCard";
-import tableDataCheck from "./variables/tableDataCheck.json";
 import tableDataComplex from "./variables/tableDataComplex.json";
 
 const fetchWidgetData = async (storeId) => {
@@ -40,7 +35,7 @@ const Dashboard = () => {
     queryKey: ["dashboardWidgetData", storeId],
     queryFn: () => fetchWidgetData(storeId),
     enabled: !!storeId, // Only fetch when storeId is available
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
     // refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
@@ -64,8 +59,6 @@ const Dashboard = () => {
         <DailyVisits key={storeId} data={widgetData?.dailyFootfall}/>
         </>
         <HourlyVisits key={storeId} data={widgetData?.hourlyFootfall} />
-        {/* <TotalSpent /> */}
-        {/* <WeeklyRevenue /> */}
       </div>
 
       {/* Tables & Charts */}
@@ -73,11 +66,7 @@ const Dashboard = () => {
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
         {/* Check Table */}
         <div>
-          {/* <CheckTable
-            columnsData={columnsDataCheck}
-            tableData={tableDataCheck}
-          /> */}
-          < DailyComparison data={widgetData?.dailyFootfall} />
+          < DailyComparison currentWeekData={widgetData?.dailyFootfall} lastWeekData={widgetData?.dailyFootfallPreviousWeek} percentageChangeInVisits={widgetData?.weeklyFootfallChange} totalVisitsLastWeek={widgetData?.totalFootfallPreviousWeek} totalVisitsThisWeek={widgetData?.totalFootfallThisWeek} />
         </div>
 
         {/* Traffic chart & Pie Chart */}

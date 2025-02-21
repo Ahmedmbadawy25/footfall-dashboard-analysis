@@ -133,6 +133,8 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
         const cairoTZ = "Africa/Cairo";
         const startOfToday = moment.tz(cairoTZ).startOf("day").toDate(); 
         const startOfWeek = moment.tz(cairoTZ).startOf("week").toDate();
+        const startOfPreviousWeek = moment(startOfWeek).subtract(7, "days").toDate();
+        const endOfPreviousWeek = moment(startOfWeek).subtract(1, "days").endOf("day").toDate();
 
         // Fetch footfall data using correct Cairo time range
         const todayFootfall = await Footfall.find({ 
@@ -145,9 +147,15 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
             timestamp: { $gte: startOfWeek } 
         });
 
+        const previousWeekFootfall = await Footfall.find({
+            store_id: storeId,
+            timestamp: { $gte: startOfPreviousWeek, $lte: endOfPreviousWeek }
+        });
+
         // Compute footfall stats
         const totalFootfallToday = todayFootfall.length;
         const totalFootfallThisWeek = pastWeekFootfall.length;
+        const totalFootfallPreviousWeek = previousWeekFootfall.length;
 
         // Process footfall per hour
         const hourlyFootfall = new Array(24).fill(0);
@@ -163,6 +171,21 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
             dailyFootfall[day]++;
         });
 
+        const dailyFootfallPreviousWeek = new Array(7).fill(0);
+        previousWeekFootfall.forEach(entry => {
+            const day = moment(entry.timestamp).tz(cairoTZ).day();
+            dailyFootfallPreviousWeek[day]++;
+        });
+
+        // Compute total weekly percentage change
+        let weeklyFootfallChange;
+        if (totalFootfallPreviousWeek === 0) {
+            // If last week was 0, the increase is technically 100% of the new count
+            weeklyFootfallChange = 100;
+        } else {
+            weeklyFootfallChange = ((totalFootfallThisWeek - totalFootfallPreviousWeek) / totalFootfallPreviousWeek) * 100;
+        }
+
         if (totalFootfallThisWeek === 0) {
             return res.status(200).json({
                 totalFootfallToday,
@@ -172,7 +195,10 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
                 quietestDayThisWeek: "N/A",
                 totalFootfallThisWeek,
                 hourlyFootfall,
-                dailyFootfall
+                dailyFootfall,
+                totalFootfallPreviousWeek,
+                dailyFootfallPreviousWeek,
+                weeklyFootfallChange
             });
         }
 
@@ -205,7 +231,10 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
                 quietestDayThisWeek,
                 totalFootfallThisWeek,
                 hourlyFootfall,
-                dailyFootfall
+                dailyFootfall,
+                totalFootfallPreviousWeek,
+                dailyFootfallPreviousWeek,
+                weeklyFootfallChange
             });
         }
 
@@ -243,7 +272,10 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
             quietestDayThisWeek,
             totalFootfallThisWeek,
             hourlyFootfall,
-            dailyFootfall
+            dailyFootfall,
+            totalFootfallPreviousWeek,
+            dailyFootfallPreviousWeek,
+            weeklyFootfallChange
         };
 
         cache.set(cacheKey, result);
