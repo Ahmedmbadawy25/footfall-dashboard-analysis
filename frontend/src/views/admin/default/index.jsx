@@ -3,6 +3,7 @@ import MiniCalendar from "components/calendar/MiniCalendar";
 import WeeklyRevenue from "views/admin/default/components/WeeklyRevenue";
 import HourlyVisits from "views/admin/default/components/HourlyVisits";
 import DailyVisits from "views/admin/default/components/DailyVisits";
+import DailyComparison from "views/admin/default/components/DailyComparison";
 import TotalSpent from "views/admin/default/components/TotalSpent";
 import PieChartCard from "views/admin/default/components/PieChartCard";
 import { IoMdHome, IoMdPeople } from "react-icons/io";
@@ -72,11 +73,11 @@ const Dashboard = () => {
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
         {/* Check Table */}
         <div>
-          <CheckTable
+          {/* <CheckTable
             columnsData={columnsDataCheck}
             tableData={tableDataCheck}
-          />
-          {/* <ComparisonChart /> */}
+          /> */}
+          < DailyComparison data={widgetData?.dailyFootfall} />
         </div>
 
         {/* Traffic chart & Pie Chart */}
