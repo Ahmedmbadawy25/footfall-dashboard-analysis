@@ -3,6 +3,7 @@ import MiniCalendar from "components/calendar/MiniCalendar";
 import HourlyVisits from "views/admin/default/components/HourlyVisits";
 import DailyVisits from "views/admin/default/components/DailyVisits";
 import DailyComparison from "views/admin/default/components/DailyComparison";
+import SummaryCard from "views/admin/default/components/SummaryCard";
 import PieChartCard from "views/admin/default/components/PieChartCard";
 import { IoMdPeople } from "react-icons/io";
 import { MdAccessTime, MdTrendingUp, MdTrendingDown } from "react-icons/md";
@@ -72,7 +73,8 @@ const Dashboard = () => {
         {/* Traffic chart & Pie Chart */}
 
         <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
-          <DailyTraffic />
+          {/* <DailyTraffic /> */}
+          <SummaryCard />
           <PieChartCard />
           {/* <Summaries />
           < PeakHoursTrend /> */}
