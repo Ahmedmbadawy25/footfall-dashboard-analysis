@@ -4,26 +4,26 @@ import { MdArrowDropDown } from "react-icons/md";
 import Card from "components/card";
 import Dropdown from "components/dropdown";
 
-const SummaryCard = () => {
+const SummaryCard = ({data}) => {
     const [summaryType, setSummaryType] = useState("Daily");
 
     const summaryData = {
         Daily: [
-            { label: "Total visits today", value: "1,200" },
-            { label: "Busiest hour today", value: "14:00 - 15:00 (300 visits)" },
+            { label: "Total visits today", value: data?.daily.total },
+            { label: "Busiest hour today", value: data?.daily.busiestHour },
             { label: "Typical busiest hour on Monday", value: "13:00 - 14:00 (250 visits)" },
-            { label: "Visitor change vs last week", value: "⬆️ 12% increase" },
+            { label: "Visitor change vs last week", value: data?.daily.visitorChange },
         ],
         Weekly: [
-            { label: "Total visits this week", value: "8,500" },
-            { label: "Busiest day this week", value: "Saturday (2,100 visits)" },
-            { label: "Visitor change on Thursday", value: "Increased from 1,200 to 1,400" },
+            { label: "Total visits this week", value: data?.weekly.total },
+            { label: "Busiest day this week", value: data?.weekly.busiestDay },
+            { label: "Visitor change", value: data?.weekly.visitorChange },
             { label: "Typical busiest day", value: "Friday (2,300 visits)" },
         ],
         Monthly: [
-            { label: "Total visits this month", value: "32,000" },
+            { label: "Total visits this month", value: data?.monthly.total },
             { label: "Busiest week this month", value: "Week 2 (9,000 visits)" },
-            { label: "Visitor change vs last month", value: "⬆️ Increased from 28,000 to 32,000" },
+            { label: "Visitor change vs last month", value: data?.monthly.visitorChange },
             { label: "Typical busiest week", value: "Week 3 (9,500 visits)" },
         ],
     };
@@ -71,7 +71,7 @@ const SummaryCard = () => {
                     <div key={index} className="mt-2 flex items-center justify-between p-2">
                         <div className="flex items-center font-bold justify-center gap-2">
                             -
-                            <p className="text-base font-bold text-navy-700 dark:text-white">
+                            <p className="text-base font-bold text-navy-700 dark:text-white mr-2">
                                 {item.label}:
                             </p>
                         </div>

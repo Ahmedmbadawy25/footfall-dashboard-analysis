@@ -129,45 +129,41 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
             return res.status(200).json(cachedData);
         }
 
-        // Ensure start times are correctly adjusted to Cairo time
         const cairoTZ = "Africa/Cairo";
-        const startOfToday = moment.tz(cairoTZ).startOf("day").toDate(); 
+        const startOfToday = moment.tz(cairoTZ).startOf("day").toDate();
         const startOfWeek = moment.tz(cairoTZ).startOf("week").toDate();
+        const startOfMonth = moment.tz(cairoTZ).startOf("month").toDate();
         const startOfPreviousWeek = moment(startOfWeek).subtract(7, "days").toDate();
-        const endOfPreviousWeek = moment(startOfWeek).subtract(1, "days").endOf("day").toDate();
+        const startOfPreviousMonth = moment(startOfMonth).subtract(1, "month").toDate();
 
-        // Fetch footfall data using correct Cairo time range
-        const todayFootfall = await Footfall.find({ 
-            store_id: storeId, 
-            timestamp: { $gte: startOfToday } 
-        });
+        // Fetch Footfall Data
+        const todayFootfall = await Footfall.find({ store_id: storeId, timestamp: { $gte: startOfToday } });
+        const pastWeekFootfall = await Footfall.find({ store_id: storeId, timestamp: { $gte: startOfWeek } });
+        const pastMonthFootfall = await Footfall.find({ store_id: storeId, timestamp: { $gte: startOfMonth } });
+        const previousWeekFootfall = await Footfall.find({ store_id: storeId, timestamp: { $gte: startOfPreviousWeek, $lt: startOfWeek } });
+        const previousMonthFootfall = await Footfall.find({ store_id: storeId, timestamp: { $gte: startOfPreviousMonth, $lt: startOfMonth } });
 
-        const pastWeekFootfall = await Footfall.find({ 
-            store_id: storeId, 
-            timestamp: { $gte: startOfWeek } 
-        });
-
-        const previousWeekFootfall = await Footfall.find({
-            store_id: storeId,
-            timestamp: { $gte: startOfPreviousWeek, $lte: endOfPreviousWeek }
-        });
-
-        // Compute footfall stats
+        // Compute Footfall Counts
         const totalFootfallToday = todayFootfall.length;
         const totalFootfallThisWeek = pastWeekFootfall.length;
+        const totalFootfallThisMonth = pastMonthFootfall.length;
         const totalFootfallPreviousWeek = previousWeekFootfall.length;
+        const totalFootfallPreviousMonth = previousMonthFootfall.length;
 
-        // Process footfall per hour
+        // Compute Percentage Change
+        const weeklyFootfallChange = totalFootfallPreviousWeek === 0 ? 100 : ((totalFootfallThisWeek - totalFootfallPreviousWeek) / totalFootfallPreviousWeek) * 100;
+        const monthlyFootfallChange = totalFootfallPreviousMonth === 0 ? 100 : ((totalFootfallThisMonth - totalFootfallPreviousMonth) / totalFootfallPreviousMonth) * 100;
+
+        // Compute Hourly and Daily Footfall
         const hourlyFootfall = new Array(24).fill(0);
         todayFootfall.forEach(entry => {
-            const hour = moment(entry.timestamp).tz(cairoTZ).hour();  // Convert to Cairo hour
+            const hour = moment(entry.timestamp).tz(cairoTZ).hour();
             hourlyFootfall[hour]++;
         });
 
-        // Compute footfall per day
         const dailyFootfall = new Array(7).fill(0);
         pastWeekFootfall.forEach(entry => {
-            const day = moment(entry.timestamp).tz(cairoTZ).day(); // Convert to Cairo day
+            const day = moment(entry.timestamp).tz(cairoTZ).day();
             dailyFootfall[day]++;
         });
 
@@ -177,105 +173,61 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
             dailyFootfallPreviousWeek[day]++;
         });
 
-        // Compute total weekly percentage change
-        let weeklyFootfallChange;
-        if (totalFootfallPreviousWeek === 0) {
-            // If last week was 0, the increase is technically 100% of the new count
-            weeklyFootfallChange = 100;
-        } else {
-            weeklyFootfallChange = ((totalFootfallThisWeek - totalFootfallPreviousWeek) / totalFootfallPreviousWeek) * 100;
-        }
+        // Find Busiest/Quietest Times
+        const findBusiestQuietest = (data) => {
+            let busiest = { time: "N/A", count: 0 };
+            let quietest = { time: "N/A", count: Infinity };
 
-        if (totalFootfallThisWeek === 0) {
-            return res.status(200).json({
-                totalFootfallToday,
-                busiestHourToday: "N/A",
-                quietestHourToday: "N/A",
-                busiestDayThisWeek: "N/A",
-                quietestDayThisWeek: "N/A",
-                totalFootfallThisWeek,
-                hourlyFootfall,
-                dailyFootfall,
-                totalFootfallPreviousWeek,
-                dailyFootfallPreviousWeek,
-                weeklyFootfallChange
+            data.forEach((count, index) => {
+                if (count > busiest.count) busiest = { time: index, count };
+                if (count < quietest.count && count > 0) quietest = { time: index, count };
             });
-        }
 
-        // Find busiest/quietest days
-        let busiestDayThisWeek = 0, quietestDayThisWeek = 0;
-        let maxDayCount = 0, minDayCount = Infinity;
-
-        dailyFootfall.forEach((count, day) => {
-            if (count > maxDayCount) {
-                maxDayCount = count;
-                busiestDayThisWeek = day;
-            }
-            if (count < minDayCount) {
-                minDayCount = count;
-                quietestDayThisWeek = day;
-            }
-        });
-
-        // Map day numbers to string names
-        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        busiestDayThisWeek = dayNames[busiestDayThisWeek];
-        quietestDayThisWeek = dayNames[quietestDayThisWeek];
-
-        if (totalFootfallToday === 0) {
-            return res.status(200).json({
-                totalFootfallToday,
-                busiestHourToday: "N/A",
-                quietestHourToday: "N/A",
-                busiestDayThisWeek,
-                quietestDayThisWeek,
-                totalFootfallThisWeek,
-                hourlyFootfall,
-                dailyFootfall,
-                totalFootfallPreviousWeek,
-                dailyFootfallPreviousWeek,
-                weeklyFootfallChange
-            });
-        }
-
-        // Find busiest/quietest hours
-        let busiestHourToday = null, quietestHourToday = null;
-        let maxHourCount = 0, minHourCount = Infinity;
-        
-        hourlyFootfall.forEach((count, hour) => {
-            if (count > maxHourCount) {
-                maxHourCount = count;
-                busiestHourToday = hour;
-            }
-            if (count < minHourCount && count > 0) {  // Only consider hours that had visits
-                minHourCount = count;
-                quietestHourToday = hour;
-            }
-        });
-
-        // Format hours as ranges
-        const formatHourRange = (hour) => {
-            if (hour === null || hour === undefined) return "N/A";
-            if (hour < 0 || hour >= 24) return "Out of range";
-        
-            const nextHour = (hour + 1) % 24; // Wrap around to 00 if hour is 23
-        
-            return `${hour.toString().padStart(2, '0')}:00-${nextHour.toString().padStart(2, '0')}:00`;
+            return {
+                busiest: busiest.count === 0 ? "N/A" : busiest.time,
+                quietest: quietest.count === Infinity ? "N/A" : quietest.time,
+            };
         };
 
-        // Send final response
+        const { busiest: busiestHourToday, quietest: quietestHourToday } = findBusiestQuietest(hourlyFootfall);
+        const { busiest: busiestDayThisWeek, quietest: quietestDayThisWeek } = findBusiestQuietest(dailyFootfall);
+
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const busiestDayName = dayNames[busiestDayThisWeek] || "N/A";
+        const quietestDayName = dayNames[quietestDayThisWeek] || "N/A";
+
+        // Summary Data
+        const summary = {
+            daily: {
+                total: totalFootfallToday,
+                busiestHour: busiestHourToday !== "N/A" ? `${busiestHourToday}:00 - ${busiestHourToday + 1}:00` : "N/A",
+                visitorChange: totalFootfallPreviousWeek > 0 ? `${weeklyFootfallChange.toFixed(1)}%` : "No data",
+            },
+            weekly: {
+                total: totalFootfallThisWeek,
+                busiestDay: busiestDayName,
+                visitorChange: `${weeklyFootfallChange.toFixed(1)}% vs last week`,
+            },
+            monthly: {
+                total: totalFootfallThisMonth,
+                visitorChange: `${monthlyFootfallChange.toFixed(1)}% vs last month`,
+            },
+        };
+
+        // Response Data
         const result = { 
             totalFootfallToday, 
-            busiestHourToday: formatHourRange(busiestHourToday), 
-            quietestHourToday: formatHourRange(quietestHourToday),
-            busiestDayThisWeek, 
-            quietestDayThisWeek,
+            busiestHourToday: busiestHourToday !== "N/A" ? `${busiestHourToday}:00 - ${busiestHourToday + 1}:00` : "N/A",
+            quietestHourToday: quietestHourToday !== "N/A" ? `${quietestHourToday}:00 - ${quietestHourToday + 1}:00` : "N/A",
+            busiestDayThisWeek: busiestDayName, 
+            quietestDayThisWeek: quietestDayName,
             totalFootfallThisWeek,
             hourlyFootfall,
             dailyFootfall,
             totalFootfallPreviousWeek,
             dailyFootfallPreviousWeek,
-            weeklyFootfallChange
+            weeklyFootfallChange,
+            summary
         };
 
         cache.set(cacheKey, result);
@@ -285,6 +237,7 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
 
 module.exports = {
     postData,
