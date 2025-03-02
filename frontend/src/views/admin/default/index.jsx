@@ -1,24 +1,16 @@
 import React from "react";
-import MiniCalendar from "components/calendar/MiniCalendar";
 import HourlyVisits from "views/admin/default/components/HourlyVisits";
 import DailyVisits from "views/admin/default/components/DailyVisits";
 import DailyComparison from "views/admin/default/components/DailyComparison";
 import SummaryCard from "views/admin/default/components/SummaryCard";
-import PieChartCard from "views/admin/default/components/PieChartCard";
+import FootfallForecast from "views/admin/default/components/FootfallForecast";
 import { IoMdPeople } from "react-icons/io";
 import { MdAccessTime, MdTrendingUp, MdTrendingDown } from "react-icons/md";
 import { FaChartLine } from "react-icons/fa";
 import { useStore } from "components/StoreContext";
 import { useQuery } from "@tanstack/react-query";
 import { makeRequest } from "fetcher";
-
-import { columnsDataComplex } from "./variables/columnsData";
-
 import Widget from "components/widget/Widget";
-import ComplexTable from "views/admin/default/components/ComplexTable";
-import DailyTraffic from "views/admin/default/components/DailyTraffic";
-import TaskCard from "views/admin/default/components/TaskCard";
-import tableDataComplex from "./variables/tableDataComplex.json";
 
 const fetchWidgetData = async (storeId) => {
   const response = await makeRequest("GET", `/api/footfall/dashboard-widgets-data/${storeId}`);
@@ -42,7 +34,6 @@ const Dashboard = () => {
 
   return (
     <div>
-      {/* Card widget */}
 
       <div className="mt-3 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-6">
         <Widget icon={<IoMdPeople className="h-7 w-7" />} title={"Total Entries Today"} subtitle={widgetData?.totalFootfallToday} />
@@ -53,8 +44,6 @@ const Dashboard = () => {
         <Widget icon={<FaChartLine className="h-7 w-7" />} title={"Total Entries This Week"} subtitle={widgetData?.totalFootfallThisWeek} />
       </div>
 
-      {/* Charts */}
-
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <>
         <DailyVisits key={storeId} data={widgetData?.dailyFootfall}/>
@@ -62,38 +51,14 @@ const Dashboard = () => {
         <HourlyVisits key={storeId} data={widgetData?.hourlyFootfall} />
       </div>
 
-      {/* Tables & Charts */}
-
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
-        {/* Check Table */}
         <div>
           < DailyComparison currentWeekData={widgetData?.dailyFootfall} lastWeekData={widgetData?.dailyFootfallPreviousWeek} percentageChangeInVisits={widgetData?.weeklyFootfallChange} totalVisitsLastWeek={widgetData?.totalFootfallPreviousWeek} totalVisitsThisWeek={widgetData?.totalFootfallThisWeek} />
         </div>
 
-        {/* Traffic chart & Pie Chart */}
-
         <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
-          {/* <DailyTraffic /> */}
           <SummaryCard data={widgetData?.summary} />
-          <PieChartCard />
-          {/* <Summaries />
-          < PeakHoursTrend /> */}
-        </div>
-
-        {/* Complex Table , Task & Calendar */}
-
-        <ComplexTable
-          columnsData={columnsDataComplex}
-          tableData={tableDataComplex}
-        />
-
-        {/* Task chart & Calendar */}
-
-        <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
-          <TaskCard />
-          <div className="grid grid-cols-1 rounded-[20px]">
-            <MiniCalendar />
-          </div>
+          < FootfallForecast /> 
         </div>
       </div>
     </div>

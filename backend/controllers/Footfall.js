@@ -3,15 +3,9 @@ const Footfall = require('../models/Footfall');
 const Store = require("../models/Store");
 const NodeCache = require("node-cache");
 const cache = new NodeCache({ stdTTL: 30 }); // Cache for 5 mins
+const forecastCache = new NodeCache({ stdTTL: 60 * 60 }); // Cache for 1 hour
 const moment = require('moment-timezone')
 
-const postData = asyncHandler(async (req, res) => {
-    const data = req.body
-    console.log(req.body)
-    await Footfall.insertMany(data)
-  
-    res.status(200).json({ message: 'data inserted successfullyyyy' });
-});
 
 const getStoresPageWidgetsData = asyncHandler(async (req, res) => {
     try {
@@ -117,7 +111,6 @@ const getStoresPageWidgetsData = asyncHandler(async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
 
 const getDashboardWidgetsData = asyncHandler(async (req, res) => {
     try {
@@ -238,9 +231,93 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
     }
 });
 
+const holtWinters = (data, alpha = 0.3, beta = 0.1, gamma = 0.3, seasonLength = 7, forecastSteps = 1, multiplicative = false) => {
+    if (data.length < seasonLength) throw new Error("Not enough data points for seasonality.");
+
+    let level = [data[0]];
+    let trend = [(data[1] - data[0]) / seasonLength];
+    let season = data.slice(0, seasonLength).map((val, i) => val - data[i % seasonLength]);
+
+    for (let i = 1; i < data.length; i++) {
+        const prevLevel = level[i - 1];
+        const prevTrend = trend[i - 1];
+        const prevSeason = season[i % seasonLength];
+
+        let newLevel = alpha * (data[i] - prevSeason) + (1 - alpha) * (prevLevel + prevTrend);
+        let newTrend = beta * (newLevel - prevLevel) + (1 - beta) * prevTrend;
+        let newSeason = gamma * (data[i] - newLevel) + (1 - gamma) * prevSeason;
+
+        if (multiplicative) {
+            newSeason = gamma * (data[i] / Math.max(newLevel, 1)) + (1 - gamma) * prevSeason;
+        }
+
+        level.push(Math.max(newLevel, 0)); // Ensure non-negative level
+        trend.push(newTrend);
+        season[i % seasonLength] = newSeason;
+    }
+
+    let forecast = [];
+    for (let i = 1; i <= forecastSteps; i++) {
+        let futureLevel = level[level.length - 1] + i * trend[trend.length - 1];
+        let futureSeason = season[(data.length + i) % seasonLength];
+
+        let predicted = multiplicative ? futureLevel * futureSeason : futureLevel + futureSeason;
+        forecast.push(Math.max(Math.round(predicted), 0)); // Clamp negatives to 0
+    }
+
+    return forecast.length === 1 ? forecast[0] : forecast;
+};
+
+const getFootfallForecast = asyncHandler(async (req, res) => {
+    try {
+        const { storeId } = req.params;
+        const cacheKey = `forecastData_${storeId}`;
+        const cachedData = forecastCache.get(cacheKey);
+
+        if (cachedData) {
+            return res.status(200).json(cachedData);
+        }
+
+        const cairoTZ = "Africa/Cairo";
+
+        // Fetch historical footfall data
+        const historicalFootfall = await Footfall.find({ store_id: storeId });
+
+        // Handle missing (0 visit) days
+        const startDate = moment(historicalFootfall[0].timestamp).tz(cairoTZ).startOf('day');
+        const endDate = moment().tz(cairoTZ).startOf('day');
+        let dailyCounts = {};
+
+        for (let date = startDate.clone(); date.isBefore(endDate); date.add(1, 'day')) {
+            dailyCounts[date.format("YYYY-MM-DD")] = 0;
+        }
+
+        historicalFootfall.forEach(entry => {
+            const day = moment(entry.timestamp).tz(cairoTZ).format("YYYY-MM-DD");
+            dailyCounts[day] = (dailyCounts[day] || 0) + 1;
+        });
+
+        // Convert to sorted arrays
+        const sortedDailyCounts = Object.entries(dailyCounts).sort((a, b) => moment(a[0]).diff(moment(b[0])));
+        const footfallDailyData = sortedDailyCounts.map(entry => entry[1]);
+
+        // Apply Holt-Winters for daily predictions (next 7 days)
+        const dailyPredictions = holtWinters(footfallDailyData, 0.3, 0.1, 0.3, 7, 7);
+
+        const result = {
+            dailyPredictions
+        };
+
+        forecastCache.set(cacheKey, result);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error fetching footfall forecast data:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
 
 module.exports = {
-    postData,
     getStoresPageWidgetsData,
     getDashboardWidgetsData,
+    getFootfallForecast
 };

@@ -4,9 +4,9 @@ const footfallController = require('../controllers/Footfall');
 const verifyToken = require("../middleware/authMiddleware")
 const authorizeRoles = require("../middleware/roleMiddleware")
 
-router.post("/", verifyToken, footfallController.postData);
 router.get("/stores-page-widgets-data", verifyToken, footfallController.getStoresPageWidgetsData);
 router.get("/dashboard-widgets-data/:storeId", verifyToken, footfallController.getDashboardWidgetsData);
+router.get("/forecast/:storeId", verifyToken, footfallController.getFootfallForecast);
 
 
 // router.get("/hourly-total/:hour/:day/:month/:year", verifyToken, authorizeRoles['admin'], footfallController.getHourlyFootfallCount);
