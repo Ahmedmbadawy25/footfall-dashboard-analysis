@@ -31,8 +31,10 @@ const StoreManager = () => {
   const handleCreateStore = async (storeData) => {
     try {
       const response = await makeRequest('POST', '/api/stores', storeData)
-      const newStore = response.data.store
-      setStores([...stores, newStore]);
+      if (response.status === '201') {
+        const newStore = response.data.store
+        setStores([...stores, newStore]);
+      }
       setIsCreateStoreModalOpen(false);
     } catch (error) {
       console.error("Failed to create store:", error);

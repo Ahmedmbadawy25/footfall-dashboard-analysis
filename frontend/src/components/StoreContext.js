@@ -18,7 +18,7 @@ export const StoreProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to fetch stores:", error);
     }
-  }, [storeId]);
+  }, []);
 
   return (
     <StoreContext.Provider value={{ storeId, setStoreId, stores, fetchStores, setStores }}>
