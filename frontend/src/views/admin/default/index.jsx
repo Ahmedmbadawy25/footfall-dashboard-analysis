@@ -58,7 +58,7 @@ const Dashboard = () => {
 
         <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
           <SummaryCard data={widgetData?.summary} />
-          < FootfallForecast /> 
+          < FootfallForecast key={storeId}/>
         </div>
       </div>
     </div>
