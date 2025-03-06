@@ -14,6 +14,17 @@ const fetchForecastData = async (storeId) => {
     throw new Error("Failed to fetch forecast data");
   };
 
+const generateNext7Days = () => {
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const today = new Date();
+  
+  return Array.from({ length: 7 }, (_, i) => {
+    const nextDay = new Date();
+    nextDay.setDate(today.getDate() + i + 1);
+    return daysOfWeek[nextDay.getDay()];
+  });
+};  
+
 const FootfallForecast = () => {
     const { storeId } = useStore();
   
@@ -38,7 +49,7 @@ const FootfallForecast = () => {
                         <TbDeviceAnalytics className="h-6 w-6 text-brand-500 dark:text-white" />
                     </div>
                     <h4 className="ml-4 text-xl font-bold text-navy-700 dark:text-white">
-                        AI forecast predictions
+                        AI Weekly Forecast Predictions
                     </h4>
                 </div>
             </div>
@@ -77,7 +88,7 @@ const barChartOptionsForecastPredictions = {
       theme: "dark",
     },
     xaxis: {
-        categories: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      categories: generateNext7Days(),
       show: false,
       labels: {
         show: true,
