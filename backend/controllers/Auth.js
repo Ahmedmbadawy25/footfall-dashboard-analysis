@@ -103,10 +103,10 @@ const returnUserDetails = asyncHandler(async (req, res) => {
 
     // Verify and decode the JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('firstName')
+    const user = await User.findById(decoded.id).select('firstName lastName')
     
     // Return user data (you might want to fetch extra details from DB)
-    return res.status(200).json({ user: decoded, name:user.firstName});
+    return res.status(200).json({ user: decoded, name:user.firstName, lastName: user.lastName});
   } catch (error) {
       return res.status(401).json({ message: 'Unauthorized - Invalid token' });
   }

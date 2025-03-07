@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [name, setName] = useState(null)
+    const [lastName, setLastName] = useState(null)
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -14,6 +15,7 @@ export const AuthProvider = ({ children }) => {
                 const res = await makeRequest('GET', '/api/auth/me');
                 setUser(res.data.user);
                 setName(res.data.name)
+                setLastName(res.data.lastName)
             } catch (error) {
                 setUser(null);
             }
@@ -47,7 +49,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, name }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, name, lastName }}>
             {children}
         </AuthContext.Provider>
     );
