@@ -28,7 +28,7 @@ const NotificationHandler = ({ status, message }) => {
           <Oval height={80} width={80} color="white" />
         </div>
       )}
-      {!loading && <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />}
+      {!loading && <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} style={{ marginTop: "100px"}}/>}
     </>
   );
 };

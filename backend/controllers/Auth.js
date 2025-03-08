@@ -89,7 +89,7 @@ const returnUserDetails = asyncHandler(async (req, res) => {
     // Extract token from cookies
     if (!req.headers.cookie) {
       return res.status(401).json({ message: 'Unauthorized - No cookies found' });
-  }
+    }
     const cookies = req.headers.cookie.split('; ').reduce((acc, cookie) => {
       const [key, value] = cookie.split('=');
       acc[key] = value;
@@ -112,9 +112,30 @@ const returnUserDetails = asyncHandler(async (req, res) => {
   }
 });
 
+const changePassword = asyncHandler(async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!newPassword) {
+      return res.status(400).json({ message: "New password is required." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    return res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
-  returnUserDetails
+  returnUserDetails,
+  changePassword
 };

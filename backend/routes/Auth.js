@@ -8,5 +8,7 @@ router.post('/register', verifyToken, authorizeRoles("admin"), authController.re
 router.post('/login', authController.loginUser);
 router.post('/logout', verifyToken, authController.logoutUser);
 router.get('/me', verifyToken, authController.returnUserDetails);
+router.post('/changepassword', verifyToken, authController.changePassword);
+
 
 module.exports = router;
