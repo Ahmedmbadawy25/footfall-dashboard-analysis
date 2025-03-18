@@ -14,6 +14,7 @@ const CreateStoreModal = ({ isOpen, onClose, onCreate }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onCreate(storeData);
+    setStoreData({name: "", location: ""})
   };
 
   if (!isOpen) return null;

@@ -20,11 +20,13 @@ const fetchWidgetData = async () => {
 
 const StoreManager = () => {
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  const [storeToDelete, setStoreToDelete] = useState(null)
   const { data: widgetData, isLoading, error } = useQuery({
     queryKey: ["storesWidgetData"],
     queryFn: fetchWidgetData,
-    staleTime: 30 * 60 * 1000, // Cache for 30 minutes
-    cacheTime: 30 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // Cache for 30 minutes
+    cacheTime: 60 * 60 * 1000,
   });
   const { stores, setStores } = useStore()
 
@@ -41,15 +43,24 @@ const StoreManager = () => {
     }
   };
 
-  const handleDeleteStore = async (storeId) => {
+  const handleDeleteStore = async () => {
+    if (!storeToDelete) return;
     try {
-      const response = await makeRequest('GET', `/api/stores/${storeId}`)
+      const response = await makeRequest('GET', `/api/stores/${storeToDelete}`)
       if (response.status === '200') {
-        setStores(stores.filter((store) => store._id !== storeId));
+        setStores(stores.filter((store) => store._id !== storeToDelete));
       }
     } catch (error) {
       console.error("Failed to delete store:", error);
+    } finally {
+      setStoreToDelete(null)
+      setIsConfirmModalOpen(false)
     }
+  };
+
+  const confirmDelete = (storeId) => {
+    setStoreToDelete(storeId);
+    setIsConfirmModalOpen(true);
   };
 
   return (
@@ -87,7 +98,7 @@ const StoreManager = () => {
               id={store._id}
               name={store.name}
               location={store.location}
-              onDelete={handleDeleteStore}
+              onDelete={() => confirmDelete(store._id)}
             />
           ))}
         </div>
@@ -98,6 +109,34 @@ const StoreManager = () => {
         onClose={() => setIsCreateStoreModalOpen(false)}
         onCreate={handleCreateStore}
       />
+
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-navy-900 bg-opacity-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg w-96">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Confirm Deletion</h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
+              Are you sure you want to delete this store? This action is irreversible.
+            </p>
+            <div className="mt-4 flex justify-end space-x-3">
+              <button
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
+                onClick={() => {
+                  setIsConfirmModalOpen(false) 
+                  setStoreToDelete(null)
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                onClick={handleDeleteStore}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
