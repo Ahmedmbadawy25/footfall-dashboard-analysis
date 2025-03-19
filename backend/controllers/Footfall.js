@@ -189,21 +189,79 @@ const getDashboardWidgetsData = asyncHandler(async (req, res) => {
         const busiestDayName = dayNames[busiestDayThisWeek] || "N/A";
         const quietestDayName = dayNames[quietestDayThisWeek] || "N/A";
 
+        // Find Typical Busiest Hour for Today's Weekday
+        const currentWeekday = moment().tz(cairoTZ).day(); // Get today's day index (0=Sunday, 6=Saturday)
+        const pastWeeksFootfallForDay = await Footfall.find({
+            store_id: storeId,
+            timestamp: {
+                $gte: moment().tz(cairoTZ).subtract(4, "weeks").startOf("week").toDate()
+            }
+        });
+
+        const hourlyAggregated = new Array(24).fill(0);
+        let countEntries = 0;
+
+        pastWeeksFootfallForDay.forEach(entry => {
+            if (moment(entry.timestamp).tz(cairoTZ).day() === currentWeekday) {
+                const hour = moment(entry.timestamp).tz(cairoTZ).hour();
+                hourlyAggregated[hour]++;
+                countEntries++;
+            }
+        });
+
+        const typicalBusiestHourIndex = hourlyAggregated.indexOf(Math.max(...hourlyAggregated));
+        const typicalBusiestHour = countEntries > 0 ? `${typicalBusiestHourIndex}:00 - ${typicalBusiestHourIndex + 1}:00` : "N/A";
+
+        // Find Typical Busiest Day of the Week
+        const weeklyAggregated = new Array(7).fill(0);
+        pastWeeksFootfallForDay.forEach(entry => {
+            const day = moment(entry.timestamp).tz(cairoTZ).day();
+            weeklyAggregated[day]++;
+        });
+
+        const typicalBusiestDayIndex = weeklyAggregated.indexOf(Math.max(...weeklyAggregated));
+        const typicalBusiestDay = typicalBusiestDayIndex !== -1 ? `${dayNames[typicalBusiestDayIndex]} (${weeklyAggregated[typicalBusiestDayIndex]} visits)` : "N/A";
+
+        // Compute Busiest Week of the Current Month
+        const weeksInMonth = [];
+        let currentWeek = moment(startOfMonth).tz(cairoTZ).startOf("week");
+
+        while (currentWeek.isBefore(moment().tz(cairoTZ))) {
+            const startOfWeek = currentWeek.clone().toDate();
+            const endOfWeek = currentWeek.clone().endOf("week").toDate();
+
+            const weekFootfall = await Footfall.countDocuments({
+                store_id: storeId,
+                timestamp: { $gte: startOfWeek, $lte: endOfWeek },
+            });
+
+            weeksInMonth.push({ weekLabel: `Week ${weeksInMonth.length + 1}`, count: weekFootfall });
+            currentWeek.add(1, "week");
+        }
+
+        weeksInMonth.sort((a, b) => b.count - a.count);
+        const busiestWeek = weeksInMonth.length ? `${weeksInMonth[0].weekLabel} (${weeksInMonth[0].count} visits)` : "N/A";
+
+        // Summary Data
+
         // Summary Data
         const summary = {
             daily: {
                 total: totalFootfallToday,
                 busiestHour: busiestHourToday !== "N/A" ? `${busiestHourToday}:00 - ${busiestHourToday + 1}:00` : "N/A",
                 visitorChange: totalFootfallPreviousWeek > 0 ? `${weeklyFootfallChange.toFixed(1)}%` : "No data",
+                typicalBusiestHour
             },
             weekly: {
                 total: totalFootfallThisWeek,
                 busiestDay: busiestDayName,
                 visitorChange: `${weeklyFootfallChange.toFixed(1)}% vs last week`,
+                typicalBusiestDay
             },
             monthly: {
                 total: totalFootfallThisMonth,
                 visitorChange: `${monthlyFootfallChange.toFixed(1)}% vs last month`,
+                busiestWeek
             },
         };
 

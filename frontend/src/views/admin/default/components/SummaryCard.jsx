@@ -11,20 +11,19 @@ const SummaryCard = ({data}) => {
         Daily: [
             { label: "Total visits today", value: data?.daily.total },
             { label: "Busiest hour today", value: data?.daily.busiestHour },
-            { label: "Typical busiest hour on Monday", value: "13:00 - 14:00 (250 visits)" },
+            { label: "Typical busiest hour on Monday", value: data?.daily.typicalBusiestHour },
             { label: "Visitor change vs last week", value: data?.daily.visitorChange },
         ],
         Weekly: [
             { label: "Total visits this week", value: data?.weekly.total },
             { label: "Busiest day this week", value: data?.weekly.busiestDay },
             { label: "Visitor change", value: data?.weekly.visitorChange },
-            { label: "Typical busiest day", value: "Friday (2,300 visits)" },
+            { label: "Typical busiest day", value: data?.weekly.typicalBusiestDay },
         ],
         Monthly: [
             { label: "Total visits this month", value: data?.monthly.total },
-            { label: "Busiest week this month", value: "Week 2 (9,000 visits)" },
+            { label: "Busiest week this month", value: data?.monthly.busiestWeek },
             { label: "Visitor change vs last month", value: data?.monthly.visitorChange },
-            { label: "Typical busiest week", value: "Week 3 (9,500 visits)" },
         ],
     };
 
